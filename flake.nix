@@ -76,6 +76,8 @@
                 pkgs.pipewire
                 pkgs.dbus
               ]}
+
+            touch $out/.gdignore
           '';
         };
 
