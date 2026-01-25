@@ -13,6 +13,29 @@
 
         name = "template";
         revision = self.shortRev or self.dirtyShortRev or "unknown";
+
+        runtimeLibs = with pkgs; [
+          xorg.libX11
+          xorg.libXcursor
+          xorg.libXinerama
+          xorg.libXrandr
+          xorg.libXext
+          xorg.libXi
+
+          wayland
+          wayland-protocols
+          libxkbcommon
+
+          libGL
+          vulkan-loader
+
+          alsa-lib
+          pipewire
+          pulseaudio
+
+          dbus
+          udev
+        ];
       in {
         packages.default = pkgs.stdenv.mkDerivation {
           pname = name;
@@ -65,17 +88,7 @@
               $out/bin/${name}
 
             wrapProgram $out/bin/${name} \
-              --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath [
-                pkgs.xorg.libX11
-                pkgs.xorg.libXcursor
-                pkgs.xorg.libXinerama
-                pkgs.xorg.libXrandr
-                pkgs.libGL
-                pkgs.alsa-lib
-                pkgs.pulseaudio
-                pkgs.pipewire
-                pkgs.dbus
-              ]}
+              --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeLibs}
 
             touch $out/.gdignore
           '';
