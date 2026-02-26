@@ -13,29 +13,6 @@
 
         name = "template";
         revision = self.shortRev or self.dirtyShortRev or "unknown";
-
-        runtimeLibs = with pkgs; [
-          xorg.libX11
-          xorg.libXcursor
-          xorg.libXinerama
-          xorg.libXrandr
-          xorg.libXext
-          xorg.libXi
-
-          wayland
-          wayland-protocols
-          libxkbcommon
-
-          libGL
-          vulkan-loader
-
-          alsa-lib
-          pipewire
-          pulseaudio
-
-          dbus
-          udev
-        ];
       in {
         packages.default = pkgs.stdenv.mkDerivation {
           pname = name;
@@ -45,50 +22,25 @@
 
           nativeBuildInputs = with pkgs; [
             godot
-            godot-export-templates-bin
 
-            xorg.xorgserver
-            libGL
-
-            patchelf
             makeWrapper
           ];
 
           buildPhase = ''
-            export HOME=$PWD/home
-            export XDG_CACHE_HOME=$HOME/.cache
-            export XDG_CONFIG_HOME=$HOME/.config
-            export XDG_DATA_HOME=$HOME/.local/share
-            export GODOT_USER_PATH=$HOME/.godot
-
-            mkdir -p \
-              $XDG_CACHE_HOME \
-              $XDG_CONFIG_HOME \
-              $XDG_DATA_HOME \
-              $GODOT_USER_PATH
-
-            mkdir -p $XDG_DATA_HOME/godot
-            ln -s ${pkgs.godot-export-templates-bin}/share/godot/export_templates \
-              $XDG_DATA_HOME/godot/export_templates
-
-            mkdir -p build
+            mkdir -p $out/share/${name}
             godot \
               --headless \
               --verbose \
               --path . \
-              --export-release "Linux/X11" build/${name}
+              --export-pack "Linux/X11" $out/share/${name}/${name}.pck
           '';
 
           installPhase = ''
             mkdir -p $out/bin
-            cp build/${name} $out/bin/
 
-            patchelf \
-              --set-interpreter ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 \
-              $out/bin/${name}
-
-            wrapProgram $out/bin/${name} \
-              --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeLibs}
+            makeWrapper ${pkgs.godot}/bin/godot $out/bin/${name} \
+              --add-flags "--main-pack" \
+              --add-flags "$out/share/${name}/${name}.pck"
 
             touch $out/.gdignore
           '';
